@@ -1,7 +1,12 @@
-import { Grid } from '@material-ui/core'
-import React, { useState } from 'react'
+import { Grid, InputAdornment, makeStyles, Button as MuiButton, ButtonGroup } from '@material-ui/core'
+import React, { useEffect, useState } from 'react'
 import Form from '../../layouts/Form'
 import { Button, Select, Input } from '../../controls';
+import { Replay } from '@material-ui/icons';
+import ReplayIcon from '@material-ui/icons/Replay';
+import RestaurantMenuIcon from '@material-ui/icons/RestaurantMenu';
+import ReorderIcon from '@material-ui/icons/Reorder';
+import { createAPIEndpoint, ENDPOINTS } from '../../api';
 
 const pMethods = [
   { id: 'none', title: 'Select' },
@@ -10,11 +15,48 @@ const pMethods = [
 ]
 
 
+const useStyles = makeStyles(theme => ({
+  adornmentText: {
+    '& .MuiTypography-root': {
+      color: '#f3b33d',
+      fontWeight: 'bolder',
+      fontSize: '1.5em'
+    }
+  },
+  submitButtonGroup: {
+    backgroundColor: '#f3b33d',
+    margin: theme.spacing(1),
+    color: '#000',
+    '& .MuiButton-label': {
+      textTransform: 'none'
+    },
+    '& hover': {
+      backgroundColor: '#f3b33d',
+    }
+  }
+}))
 
 
 const OrderForm = (props) => {
 
   const { values, errors, handleInputChange } = props;
+  const classes = useStyles();
+
+  const [customerList, setCustomerList] = useState([]);
+
+
+  useEffect(() => {
+    createAPIEndpoint(ENDPOINTS.CUSTOMER).fetchAll()
+    .then( res => {
+      let customerList = res.data.map( item => ({
+        id: item._id,
+        title: item.customerName
+      }));
+      customerList = [{id: '0', title: 'select'}].concat(customerList);
+      setCustomerList(customerList);
+    } )
+    .catch(err => console.log(err));
+  }, [])
 
 
   return (
@@ -26,19 +68,21 @@ const OrderForm = (props) => {
             label="Order Number"
             name="Order Number"
             value={values.orderNumber}
+            InputProps={{
+              startAdornment: <InputAdornment
+                position="start"
+                className={classes.adornmentText}
+              >#
+               </InputAdornment>
+
+            }}
           />
           <Select
             label="Customer"
             name="customerId"
             value={values.customerId}
             onChange={handleInputChange}
-            options={[
-              { id: 0, title: "Select" },
-              { id: 1, title: "Customer 1" },
-              { id: 2, title: "Customer 2" },
-              { id: 3, title: "Customer 3" },
-              { id: 4, title: "Customer 4" },
-            ]}
+            options={customerList}
           />
         </Grid>
         <Grid item xs={6}>
@@ -54,9 +98,35 @@ const OrderForm = (props) => {
             name="gTotal"
             values
             value={values.gTotal}
+            InputProps={{
+              startAdornment: <InputAdornment
+                position="start"
+                className={classes.adornmentText}
+              >
+                $
+                </InputAdornment>
+
+            }}
           />
+
+          <ButtonGroup className={classes.submitButtonGroup}>
+            <MuiButton size="large" type="Submit" endIcon={<RestaurantMenuIcon />}>
+              Submit
+        </MuiButton>
+            <MuiButton size="large" startIcon={<ReplayIcon />} >
+
+            </MuiButton>
+          </ButtonGroup>
+          <Button
+            size="large"
+            startIcon={<ReorderIcon />}
+          >
+            Orders
+          </Button>
         </Grid>
-        {JSON.stringify(values, 2, null)}
+
+
+        {/* {JSON.stringify(values, 2, null)} */}
       </Grid>
     </Form>
   )
